@@ -1,6 +1,6 @@
-(defproject funcade "0.1.0"
+(defproject funcade "0.1.1"
   :description "Gives you OAuth 2.0 tokens so you can play"
-  :url "https://github.com/shvetsm/funcade"
+  :url "https://github.com/tolitius/funcade"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
