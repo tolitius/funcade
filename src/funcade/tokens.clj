@@ -45,7 +45,9 @@
         [nil (ex-info "token has expired" t)]
         [t nil]))))
 
-(defn new-token! [{:keys [token-url grant-type client-id client-secret scope token-headers]}]
+(defn new-token! [{:keys [access-token-url grant-type client-id client-secret scope token-headers]
+                   :or {grant-type "client_credentials"
+                        token-headers {:Content-Type "application/x-www-form-urlencoded"}}}]
   (let [xf (fn [{:keys [status body error]}]
              (if (and (= status 200) (not error))
                [(json/read-value body codec/underscore->kebab-mapper) nil]
@@ -55,7 +57,11 @@
                                                                     :client_id     client-id
                                                                     :client_secret client-secret
                                                                     :scope         scope}))]
-    (http/request {:url token-url :method :post :headers (sp/transform [sp/MAP-KEYS] name token-headers) :body payload} #(a/put! ch  %))
+    (http/request {:url access-token-url
+                   :method :post
+                   :headers (sp/transform [sp/MAP-KEYS] name token-headers)
+                   :body payload}
+                  #(a/put! ch  %))
     ch))
 
 (defn schedule-token-renewal [name-of-job token-key should-renew? new-token! stop-ch token-store]

@@ -38,7 +38,7 @@
 
 (defn wake-token-master [token-name config]
   "config is
-  {:token-url OAuth 2.0 server url
+  {:access-token-url OAuth 2.0 server url
    :grant-type OAuth 2.0 grant type (client_crdentials, implicit, etc)
    :client-id OAuth 2.0 client id
    :client-secret OAuth 2.0 secret (a hex string)

@@ -13,10 +13,19 @@ user=> (require '[funcade.core :as f])
 user=> (def conf {:client-id "planet-earth"
                   :scope "solar-system"
                   :token-headers {:Content-Type "application/x-www-form-urlencoded"}
-                  :token-url "https://milky-way-galaxy/token.oauth2"
+                  :access-token-url "https://milky-way-galaxy/token.oauth2"
                   :grant-type "client_credentials"
                   :client-secret "super-hexidecimal-secret"})
 #'user/conf
+```
+
+`grant-type` and `token-headers` are defaulted to the above values so it can be simplified a bit to:
+
+```clojure
+(def conf {:client-id "planet-earth"
+           :scope "solar-system"
+           :access-token-url "https://milky-way-galaxy/token.oauth2"
+           :client-secret "super-hexidecimal-secret"})
 ```
 
 ```clojure
@@ -38,7 +47,7 @@ true
 where config is:
 
 ```clojure
-  {:token-url OAuth 2.0 server url
+  {:access-token-url OAuth 2.0 server url
    :grant-type OAuth 2.0 grant type (client_crdentials, implicit, etc)
    :client-id OAuth 2.0 client id
    :client-secret OAuth 2.0 secret (a hex string)
@@ -49,7 +58,7 @@ where config is:
 
 ## License
 
-Copyright © 2018 shvetsm
+Copyright © 2020 shvetsm
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
