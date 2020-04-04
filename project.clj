@@ -1,5 +1,5 @@
-(defproject funcade "0.1.2"
-  :description "Gives you OAuth 2.0 tokens so you can play"
+(defproject tolitius/funcade "0.1.3"
+  :description "creates, manages and refreshes oauth 2.0 jwt tokens"
   :url "https://github.com/tolitius/funcade"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

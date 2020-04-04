@@ -1,11 +1,11 @@
 # funcade
 
-A Clojure library designed to grab and auto renew tokens from OAuth 2.0
+creates, manages and refreshes oauth 2.0 jwt tokens
 
-[![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Ffuncade%2Flatest-version.json&query=version&colorB=blue)](https://github.com/shvetsm/funcade/releases)
-[![<! clojars](https://img.shields.io/clojars/v/funcade.svg)](https://clojars.org/funcade)
+[![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Ffuncade%2Flatest-version.json&query=version&colorB=blue)](https://github.com/tolitius/funcade/releases)
+[![<! clojars](https://img.shields.io/clojars/v/tolitius/funcade.svg)](https://clojars.org/tolitius/funcade)
 
-## Usage
+## usage
 
 ```clojure
 user=> (require '[funcade.core :as f])
@@ -56,9 +56,38 @@ where config is:
    :refresh-percent (when less than x% of time between expires-at and issued-at remains, refresh the token)}
 ```
 
-## License
+## group many sources
 
-Copyright © 2020 shvetsm
+```clojure
+=> (def sources {:mars {:client-id "..."
+                        :client-secret "..."
+                        :access-token-url "..."
+                        :scope "..."}
+                 :asgard {:client-id "..."
+                          :client-secret "..."
+                          :access-token-url "..."
+                          :scope "..."}})
+
+=> (def jwt (f/wake-token-masters sources))
+```
+
+creates two token masters:
+
+```clojure
+=> jwt
+;; {:mark #object[funcade.core.TokenMaster"],
+;;  :asgard #object[funcade.core.TokenMaster"]}
+
+=> (-> jwt :mars f/current-token)
+;; "eyJhbGci...dc22w"
+
+=> (-> jwt :asgard f/current-token)
+;; "eyJhbRkv...id95p"
+```
+
+## license
+
+copyright © 2020 shvetsm
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
