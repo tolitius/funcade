@@ -50,3 +50,11 @@
         =stop= (init-token-channel! token-name config tokens)]
     (TokenMaster. token-name tokens =stop=)))
 
+(defn wake-token-masters
+  "wakes up several token masters given the map of {source config}.
+   i.e. {:orion {:client-id ...}
+         :asgard {:client-id ...}}"
+  [configs]
+  (into {}
+        (for [[source config] configs]
+          [source (wake-token-master source config)])))
