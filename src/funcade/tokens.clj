@@ -36,8 +36,8 @@
       (select-keys [:iat :exp])
       (clojure.set/rename-keys {:iat :issued :exp :expires})))
 
-(defn prepare-token [[token err :as r]]
-  (if err
+(defn prepare-token [jwt? [token err :as r]]
+  (if (or err (not jwt?))
     r
     (let [data token
           t (merge data {:issued (.getEpochSecond (Instant/now))} (parse-token-data data))]
@@ -45,18 +45,30 @@
         [nil (ex-info "token has expired" t)]
         [t nil]))))
 
-(defn new-token! [{:keys [access-token-url grant-type client-id client-secret scope token-headers]
+(defn new-token! [{:keys [access-token-url
+                          grant-type
+                          client-id
+                          client-secret
+                          username
+                          password
+                          scope
+                          token-headers
+                          jwt?]
                    :or {grant-type "client_credentials"
-                        token-headers {:Content-Type "application/x-www-form-urlencoded"}}}]
+                        token-headers {:Content-Type "application/x-www-form-urlencoded"}
+                        jwt? true}}]
   (let [xf (fn [{:keys [status body error]}]
              (if (and (= status 200) (not error))
                [(json/read-value body codec/underscore->kebab-mapper) nil]
                [nil {:status status :body body :error error}]))
-        ch (a/promise-chan (comp (map xf) (map prepare-token)))
+        ch (a/promise-chan (comp (map xf)
+                                 (map (partial prepare-token jwt?))))
         payload (s/join "&" (map (fn [[k v]] (str (name k) "=" v)) {:grant_type    grant-type
                                                                     :client_id     client-id
                                                                     :client_secret client-secret
-                                                                    :scope         scope}))]
+                                                                    :username username
+                                                                    :password password
+                                                                    :scope scope}))]
     (http/request {:url access-token-url
                    :method :post
                    :headers (sp/transform [sp/MAP-KEYS] name token-headers)
