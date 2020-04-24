@@ -77,18 +77,19 @@
     ch))
 
 (defn schedule-token-renewal [name-of-job token-key should-renew? new-token! stop-ch token-store]
-  (log/trace "Starting token refresh poll" "name-of-job" name-of-job "token-key" token-key)
+  (log/infof "starting token refresh poll for %s (i.e. token key is %s)" name-of-job token-key)
   (a/go-loop []
-    (log/trace "running" name-of-job "token renewal..." token-key)
     (let [now (fn [] (.getEpochSecond (Instant/now)))
           [_ ch] (a/alts! [stop-ch (a/timeout 60000)])]
       (cond
-        (= ch stop-ch) (log/trace "stopping" name-of-job "token poller...")
-        (should-renew? (get @token-store token-key) (now)) (let [[token err] (a/<! (new-token!))]
-                                                       (if err
-                                                         (log/trace "couldn't renew token for" name-of-job err)
-                                                         (do
-                                                           (log/trace "renewing token:" token)
-                                                           (swap! token-store (fn [s] (assoc s token-key token)))))
-                                                       (recur))
+        (= ch stop-ch) (log/info "stopping" name-of-job "token poller...")
+        (should-renew?
+          (get @token-store token-key) (now)) (let [_ (log/infof "renewing token for %s" token-key)
+                                                    [token err] (a/<! (new-token!))]
+                                                (if err
+                                                  (log/error "couldn't renew token for" name-of-job err)
+                                                  (do
+                                                    (log/info "renewed token:" (dissoc token :access-token))
+                                                    (swap! token-store (fn [s] (assoc s token-key token)))))
+                                                (recur))
         :else (recur)))))

@@ -18,7 +18,9 @@
     (stop-token-channel! =stop=)))
 
 (defn- init-token-channel!
-  [token-key {:keys [jwt?] :as params} token-store]
+  [token-key {:keys [jwt?]
+              :or {jwt? true}
+              :as params} token-store]
   (let [stop-chan (a/chan 10)
         [token err] (a/<!! (t/new-token! params))]
     (if err
