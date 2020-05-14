@@ -5,6 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.4.474"]
+                 [buddy/buddy-sign "3.1.0"]
+                 [buddy/buddy-auth "2.2.0"]
                  [http-kit "2.4.0-alpha6"]
                  [com.auth0/java-jwt "3.8.1"]
                  [org.clojure/tools.logging "1.0.0"]
