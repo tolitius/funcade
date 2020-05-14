@@ -5,7 +5,7 @@ creates, manages and refreshes oauth 2.0 jwt tokens
 [![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Ftolitius%2Ffuncade%2Flatest-version.json&query=version&colorB=blue)](https://github.com/tolitius/funcade/releases)
 [![<! clojars](https://img.shields.io/clojars/v/tolitius/funcade.svg)](https://clojars.org/tolitius/funcade)
 
-## usage
+## token generation
 
 ```clojure
 => (require '[funcade.core :as f])
@@ -36,7 +36,7 @@ user=> (f/stop token-repo)
 true
 ```
 
-## group many sources
+### group many sources
 
 ```clojure
 => (def sources {:mars {:client-id "..."
@@ -63,6 +63,50 @@ creates two token masters:
 
 => (-> jwt :asgard f/current-token)
 ;; "eyJhbRkv...id95p"
+```
+
+## middleware usage
+
+```clojure
+=> (require '[reitit.ring :as ring])
+=> (require '[funcade.middleware.reitit :as fun])
+
+=> (def config {:jwk {:uri "https://milky-way-galaxy/ext/jwtsigningcert/jwks"})
+
+=> (def app
+      (ring/ring-handler
+        (ring/router
+          ["/ping" {:get {:scope :my-scope
+                          :handler (fn [_]
+                                     {:status 200
+                                      :body "success"})}}]
+          {:data {:middleware [(fun/wrap-jwt-authentication config})
+                               fun/scope-middleware]}})))
+```
+
+valid request:
+
+```clojure 
+=> (def token "eyJhbGci...dc22w")
+
+=> (app {:request-method :get :uri "/ping" :headers {:authorization (str "Bearer " token)}})
+;; {:status 200, :body "success"}
+```
+
+invalid/missing token:
+
+```clojure 
+=> (app {:request-method :get :uri "/ping"}})
+;; {:status 401, :body {:error "invalid authorization header", :message "access to /ping is not authorized"}}
+```
+
+invalid scope:
+
+```clojure 
+=> (def token "eyJhbGci...dc22w")
+
+=> (app {:request-method :get :uri "/ping" :headers {:authorization (str "Bearer " token)}})
+;; {:status 401, :body {:message "missing required scope", :required :my-scope, :scopes (:not-my-scope)}}
 ```
 
 ## license
