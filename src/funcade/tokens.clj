@@ -5,20 +5,22 @@
             [cuerdas.core :as s]
             [clojure.tools.logging :as log]
             [funcade.codec :as codec]
+            [funcade.tools :as tools]
             [com.rpl.specter :as sp])
   (:import [java.time Instant]))
 
 (defn in-open-interval? [begin end value] (< begin value end))
 
-(defn token-in-interval? [{:keys [expires]} time-in-seconds]
-  (when expires
-    (< time-in-seconds expires)))
+(defn token-in-interval? [{:keys [expires-at]} time-in-seconds]
+  (when expires-at
+    (< time-in-seconds expires-at)))
 
-(defn renew-token? [percentage {:keys [issued expires] :as m} now]
+(defn renew-token? [percentage {:keys [issued-at expires-at] :as m} now]
   (assert (in-open-interval? 0 1 percentage) (str "percentage is not in (0,1) interval: " percentage))
-  (let [diff (- expires now)
+  ; (log/infof "issued-at %s, expires-at %s, now %s, percentage %s" issued-at expires-at now percentage)
+  (let [diff (- expires-at now)
         delta (Math/abs diff)
-        p (/ delta (Math/abs (- expires issued)))]
+        p (/ delta (Math/abs (- expires-at issued-at)))]
     (or (< delta 60)
         (neg? diff)
         (< p percentage))))
@@ -34,13 +36,13 @@
       String.
       codec/parse-json
       (select-keys [:iat :exp])
-      (clojure.set/rename-keys {:iat :issued :exp :expires})))
+      (clojure.set/rename-keys {:iat :issued-at :exp :expires-at})))
 
 (defn prepare-token [jwt? [token err :as r]]
   (if (or err (not jwt?))
     r
     (let [data token
-          t (merge data {:issued (.getEpochSecond (Instant/now))} (parse-token-data data))]
+          t (merge data {:issued-at (.getEpochSecond (Instant/now))} (parse-token-data data))]
       (if-not (token-valid? t)
         [nil (ex-info "token has expired" t)]
         [t nil]))))
@@ -90,6 +92,6 @@
                                                   (log/error "couldn't renew token for" name-of-job err)
                                                   (do
                                                     (log/info "renewed token:" (dissoc token :access-token))
-                                                    (swap! token-store (fn [s] (assoc s token-key token)))))
+                                                    (swap! token-store (fn [s] (assoc s token-key (tools/timebox token))))))
                                                 (recur))
         :else (recur)))))

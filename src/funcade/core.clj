@@ -1,6 +1,7 @@
 (ns funcade.core
   (:require [clojure.core.async :as a]
             [clojure.tools.logging :as log]
+            [funcade.tools :as tools]
             [funcade.tokens :as t]))
 
 (defn- stop-token-channel! [stop-chan]
@@ -22,21 +23,21 @@
               :or {jwt? true}
               :as params} token-store]
   (let [stop-chan (a/chan 10)
-        [token err] (a/<!! (t/new-token! params))]
+        [token err] (a/<!! (t/new-token! params))
+        token (tools/timebox token)]
     (if err
       (do
         (log/error "can't acquire token!" err)
         (throw err))
       (do
         (swap! token-store (fn [s] (assoc s token-key token)))
-        (if jwt?
-          (t/schedule-token-renewal
-            (name token-key)
-            token-key
-            (partial t/renew-token?  (/ (or (:refresh-percent params) 10) 100))
-            (fn [] (t/new-token! params))
-            stop-chan
-            token-store))
+        (t/schedule-token-renewal
+          (name token-key)
+          token-key
+          (partial t/renew-token?  (/ (or (:refresh-percent params) 10) 100))
+          (fn [] (t/new-token! params))
+          stop-chan
+          token-store)
         stop-chan))))
 
 (defn wake-token-master [token-name config]
