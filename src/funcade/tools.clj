@@ -80,3 +80,17 @@
     (-> t
         (assoc :issued-at issued-at)
         (assoc :expires-at expires-at))))
+
+(defn fmv
+  "apply f to each value v of map m"
+  [m f]
+  (into {}
+        (for [[k v] m]
+          [k (f v)])))
+
+(defn fmk
+  "apply f to each key k of map m"
+  [m f]
+  (into {}
+        (for [[k v] m]
+          [(f k) v])))
