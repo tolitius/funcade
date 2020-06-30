@@ -76,7 +76,7 @@
 
   [{:keys [issued issued-at iat expires expires-at exp] :as t}]
   (let [issued-at (to-seconds [iat issued issued-at])
-        expires-at (to-seconds [exp expires expires-at (+ issued-at 300)])] ;; 5 min in case expires-at is missing
+        expires-at (to-seconds [exp expires expires-at (+ issued-at 3600)])] ;; 1 hour in case expires-at is missing
     (-> t
         (assoc :issued-at issued-at)
         (assoc :expires-at expires-at))))
