@@ -111,6 +111,30 @@ invalid scope:
 ;; {:status 401, :body {:message "missing required scope", :required :my-scope, :scopes (:not-my-scope)}}
 ```
 
+## Java API
+
+```java
+import funcade.core.TokenMaster;
+import tolitius.Funcade;
+```
+
+```java
+var config  = Map.of("client-id", clientId,
+                     "client-secret", clientSecret,
+                     "access-token-url", accessTokenUri,
+                     "username", username,
+                     "password", password,
+                     "grant-type", grantType);
+
+var tokenMaster = Funcade.wakeTokenMaster("asgard", config);
+```
+
+and then whenever you need a token:
+
+```java
+var token = Funcade.currentToken(tokenMaster);
+```
+
 ## license
 
 copyright © 2020 shvetsm
