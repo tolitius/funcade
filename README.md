@@ -1,9 +1,16 @@
 # funcade
 
-creates, manages and refreshes oauth 2.0 jwt tokens
+creates, manages and refreshes jwt tokens
 
 [![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Ftolitius%2Ffuncade%2Flatest-version.json&query=version&colorB=blue)](https://github.com/tolitius/funcade/releases)
 [![<! clojars](https://img.shields.io/clojars/v/tolitius/funcade.svg)](https://clojars.org/tolitius/funcade)
+
+
+- [make them tokens](#make-them-tokens)
+  - [group many sources](#group-many-sources)
+- [using middleware](#using-middleware)
+- [Java API](#java-api)
+- [license](#license)
 
 ## make them tokens
 
@@ -88,7 +95,7 @@ funcade has middleware and helpers to use auth requests protected behind JWT tok
 
 valid request:
 
-```clojure 
+```clojure
 => (def token "eyJhbGci...dc22w")
 
 => (app {:request-method :get :uri "/ping" :headers {:authorization (str "Bearer " token)}})
@@ -97,14 +104,14 @@ valid request:
 
 invalid/missing token:
 
-```clojure 
+```clojure
 => (app {:request-method :get :uri "/ping"}})
 ;; {:status 401, :body {:error "invalid authorization header", :message "access to /ping is not authorized"}}
 ```
 
 invalid scope:
 
-```clojure 
+```clojure
 => (def token "eyJhbGci...dc22w")
 
 => (app {:request-method :get :uri "/ping" :headers {:authorization (str "Bearer " token)}})
