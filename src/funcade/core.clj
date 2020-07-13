@@ -28,7 +28,7 @@
     (if err
       (do
         (log/error "can't acquire token!" err)
-        (throw err))
+        (throw (ex-info "could not aquire the JWT token" err)))
       (do
         (swap! token-store (fn [s] (assoc s token-key token)))
         (t/schedule-token-renewal
