@@ -8,7 +8,8 @@ creates, manages and refreshes jwt tokens
 
 - [make them tokens](#make-them-tokens)
   - [group many sources](#group-many-sources)
-- [using middleware](#using-middleware)
+- [use key sets (JWKS)](#use-key-sets-jwks)
+- [use in middleware](#using-middleware)
 - [Java API](#java-api)
 - [license](#license)
 
@@ -70,6 +71,29 @@ creates two token masters:
 
 => (-> jwt :asgard f/current-token)
 ;; "eyJhbRkv...id95p"
+```
+
+## use key sets (JWKS)
+
+```clojure
+=> (require '[funcade.jwks :as jk])
+
+=> (jk/jwks->keys "https://foo.com/bar/jwks")
+{"key-for-cert-one" #object[bouncycastle..BCRSAPublicKey "RSA Public Key [e7:ec:...]
+ "key-for-cert-two" #object[bouncycastle..BCRSAPublicKey "RSA Public Key [f1:25:...]
+ "key-for-cert-three" #object[bouncycastle..BCRSAPublicKey "RSA Public Key [b4:39:...]}
+```
+
+keys are looked up by token's [kid](https://tools.ietf.org/html/rfc7515#section-4.1.4):
+
+```clojure
+=> (def keys (jk/jwks->keys "https://foo.com/bar/jwks"))
+
+=> (def token "eyJhbGciOiJSUzI1Ni...")
+#'user/token
+
+=> (jk/find-token-key keys token)
+#object[org.bouncycastle..BCRSAPublicKey "RSA Public Key [f1:25:]
 ```
 
 ## using middleware
