@@ -28,7 +28,7 @@
   (try
     (-> (j/read-value body mapper)
         :keys
-        first
+        second
         keys/jwk->public-key)
     (catch Exception ex
       (-> "unable to retrieve key from jwk response"
