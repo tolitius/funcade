@@ -27,7 +27,7 @@
 
 (defn jwks-backend
   [{:keys [keyset authfn unauthorized-handler options token-name on-error]
-    :or {authfn identity token-name "Token"}}]
+    :or   {authfn identity token-name "Bearer" options {:alg :rs256}}}]
   {:pre [(ifn? authfn)]}
   (reify
     proto/IAuthentication
@@ -53,7 +53,5 @@
 (defn jwks-authenticator
   "JSON Web Key Set specific:
    i.e. needs a 'https://foo.com/bar/jwks' URI that returns unsign keys"
-  [{:keys [uri]}]
-  (jwks-backend {:keyset     (jk/jwks->keys uri)
-                 :token-name "Bearer"
-                 :options    {:alg :rs256}}))
+  [{:keys [uri] :as options}]
+  (jwks-backend (assoc options :keyset (jk/jwks->keys uri))))
