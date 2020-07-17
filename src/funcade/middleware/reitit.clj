@@ -6,9 +6,12 @@
 (defn wrap-jwt-authentication [{:keys [jwk]}]
   "middleware for JWT oauth2 bearer token validation
 
-  adds :identity to request map on successful token decoding"
+   takes a {:jwk {:uri \"https://foo.com/bar/jwks\"}} map
+   that \":uri\" returns a list of JWT keys (a.k.a. keyset)
+
+   adds :identity to request map on successful token decoding"
   {:name ::jwt-auth
-   :wrap #(bm/wrap-authentication % (fmb/token-authenticator jwk))})
+   :wrap #(bm/wrap-authentication % (fmb/jwks-authenticator jwk))})
 
 (def scope-middleware
   "middleware for scope validation
