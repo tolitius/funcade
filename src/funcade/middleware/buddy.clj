@@ -6,18 +6,18 @@
             [buddy.auth.backends :as backends]
             [buddy.auth.protocols :as proto]))
 
-(defn validate-scope [handler request required-scope]
+(defn validate-scope [handler request required-scopes]
   (let [decoded-token (request :identity)]
     (let [scopes (->> (decoded-token :scope)
                       (map #(keyword %)))
-          allowed-scopes (if (coll? required-scope)
-                           (set required-scope)
-                           #{required-scope})]
+          allowed-scopes (if (coll? required-scopes)
+                           (set required-scopes)
+                           #{required-scopes})]
       (if (some allowed-scopes scopes)
         (handler request)
         {:status 401
          :body   {:message  "missing required scope"
-                  :required required-scope
+                  :required required-scopes
                   :scopes   scopes}}))))
 
 (defn authenticate [handler scope]
