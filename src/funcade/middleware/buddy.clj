@@ -9,8 +9,11 @@
 (defn validate-scope [handler request required-scope]
   (let [decoded-token (request :identity)]
     (let [scopes (->> (decoded-token :scope)
-                      (map #(keyword %)))]
-      (if (some #{required-scope} scopes)
+                      (map #(keyword %)))
+          allowed-scopes (if (coll? required-scope)
+                           (set required-scope)
+                           #{required-scope})]
+      (if (some allowed-scopes scopes)
         (handler request)
         {:status 401
          :body   {:message  "missing required scope"
