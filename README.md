@@ -168,7 +168,7 @@ var token = Funcade.currentToken(tokenMaster);
 
 ## license
 
-copyright © 2020 shvetsm
+copyright © 2022 [@shvetsm](https://github.com/shvetsm) / tolitius
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
