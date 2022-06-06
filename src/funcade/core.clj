@@ -11,7 +11,7 @@
   (current-token [_])
   (stop [_]))
 
-(deftype TokenMaster [token-name tokens =stop=]
+(defrecord TokenMaster [token-name tokens =stop=]
   MasterTokens
   (current-token [_]
     (->  @tokens (get token-name) :access-token))
@@ -28,7 +28,7 @@
     (if err
       (do
         (log/error "can't acquire token!" err)
-        (throw (ex-info "could not aquire the JWT token" err)))
+        (throw (ex-info "could not acquire the JWT token" err)))
       (do
         (swap! token-store (fn [s] (assoc s token-key token)))
         (t/schedule-token-renewal
@@ -40,16 +40,16 @@
           token-store)
         stop-chan))))
 
-(defn wake-token-master [token-name config]
+(defn wake-token-master
   "config is
   {:access-token-url OAuth 2.0 server url
-   :grant-type OAuth 2.0 grant type (client_crdentials, implicit, etc)
+   :grant-type OAuth 2.0 grant type (client_credentials, implicit, etc)
    :client-id OAuth 2.0 client id
    :client-secret OAuth 2.0 secret (a hex string)
    :scope OAuth 2.0 Scope
    :token-headers a map of headers {\"Cookie\" \"foo=bar\"}
    :refresh-percent (when less than x% of time between expires-at and issued-at remains, refresh the token)}"
-
+  [token-name config]
   (let [tokens (atom {})
         =stop= (init-token-channel! token-name config tokens)]
     (TokenMaster. token-name tokens =stop=)))

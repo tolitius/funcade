@@ -1,9 +1,9 @@
 (ns funcade.jwks
-  (:require [jsonista.core :as json]
-            [buddy.core.keys :as bk]
-            [org.httpkit.client :as http]
-            [jsonista.core :as j]
-            [funcade.tools :as t]))
+  (:require [buddy.core.keys :as bk]
+            [camel-snake-kebab.core :as csk]
+            [cheshire.core :as json]
+            [funcade.tools :as t]
+            [org.httpkit.client :as http]))
 
 (defn- group-by-kid [certs]
  (->> (for [{:keys [kid] :as cert} certs]
@@ -12,7 +12,7 @@
 
 (defn- parse-jwk-response [{:keys [body] :as response}]
   (try
-    (-> (j/read-value body t/mapper)
+    (-> (json/parse-string body csk/->kebab-case-keyword)
         :keys
         group-by-kid)
     (catch Exception ex
@@ -31,6 +31,6 @@
 (defn find-token-key [jwks token]
   (some-> token
           t/decode64
-          (json/read-value t/mapper)
+          (json/parse-string csk/->kebab-case-keyword)
           :kid
           jwks))

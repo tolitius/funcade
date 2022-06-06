@@ -1,0 +1,12 @@
+{:paths ["src" "classes"]
+ :deps  {buddy/buddy-auth                    {:mvn/version "3.0.323"}
+         buddy/buddy-sign                    {:mvn/version "3.4.333"}
+         camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.2"}
+         cheshire/cheshire                   {:mvn/version "5.10.1"}
+         com.auth0/java-jwt                  {:mvn/version "3.8.1"}
+         funcool/cuerdas                     {:mvn/version "2.2.1"}
+         http-kit/http-kit                   {:mvn/version "2.5.3"}
+         org.clojure/clojure                 {:mvn/version "1.11.1"}
+         org.clojure/core.async              {:mvn/version "1.5.648"}
+         org.clojure/tools.logging           {:mvn/version "1.2.4"}}}
+
