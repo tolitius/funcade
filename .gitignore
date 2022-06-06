@@ -10,3 +10,5 @@ pom.xml.asc
 /funcade.iml
 /target/
 /.idea/
+/.lsp
+/.clj-kondo

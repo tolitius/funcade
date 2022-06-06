@@ -1,11 +1,8 @@
 (ns funcade.tools
-  (:require [jsonista.core :as json]
-            [clojure.string :as s]
-            [jsonista.core :as j])
-  (:import [org.apache.commons.codec.binary Base64]
-           [java.time Instant]))
-
-(def mapper (j/object-mapper {:decode-key-fn keyword}))
+  (:require [clojure.string :as s]
+            [funcade.codec :as codec]
+            [cheshire.core :as json])
+  (:import (java.time Instant)))
 
 (defn auth-header
   ([token]
@@ -13,13 +10,10 @@
   ([token prefix]
    {"Authorization" (str prefix " " token)}))
 
-(defn decode64 [xs]
-  (-> xs Base64/decodeBase64 String.))
-
 (defn decode-jwt [token]
   (->> (s/split token #"\.")
        (take 2) ;; don't decode the signature (for now)
-       (map (comp json/read-value decode64))))
+       (map (comp json/parse-string codec/decode64))))
 
 (defn value? [v]
   (or (number? v)
@@ -43,7 +37,6 @@
         ts->seconds)))
 
 (defn timebox
-
   "some systems return issued, some issued-at, some iat, etc.
    some do not return expires/expires-at/exp
    some return ts is seconds, others in ms
@@ -59,12 +52,22 @@
         (assoc :issued-at issued-at)
         (assoc :expires-at expires-at))))
 
-(defn fmv
-  "apply f to each value v of map m"
-  [m f]
-  (into {}
-        (for [[k v] m]
-          [k (f v)])))
+(defn params->query-str
+  "Convert a map of stuff to a query-string, e.g.:
+  (params->query-str {:foo 'abc'
+                      :bar 123
+                      :baz false})
+  => '&foo=abc&bar=123&baz=false"
+  [params]
+  {:pre  [(map? params)]
+   :post [(string? %)]}
+  (->> params
+       (map (comp (partial apply str)
+                  (juxt (comp name key)
+                        (constantly "=")
+                        val)))
+       (interpose "&")
+       (apply str)))
 
 (defn fmk
   "apply f to each key k of map m"

@@ -1,6 +1,4 @@
 (ns funcade.codec
-  (:require [jsonista.core :as json]
-            [cuerdas.core :as s])
   (:import [java.util.zip Inflater GZIPOutputStream GZIPInputStream]
            [java.io ByteArrayOutputStream ByteArrayInputStream]
            [java.util Base64]))
@@ -38,16 +36,3 @@
 
 (defn decode64 [^String s]
   (.decode (Base64/getDecoder) s))
-
-(defn encode64 [^bytes bs]
-  (.encodeToString (Base64/getEncoder) bs))
-
-(def mapper (json/object-mapper {:decode-key-fn keyword}))
-
-(defn underscore-case->kebab-case [s]
-  (some-> s s/lower (s/replace "_" "-")))
-
-(def underscore->kebab-mapper (json/object-mapper {:decode-key-fn (comp keyword underscore-case->kebab-case)}))
-
-(defn parse-json [^String s]
-  (json/read-value s mapper))

@@ -1,24 +1,24 @@
 (ns funcade.middleware.buddy
-  (:require [funcade.jwks :as jk]
-            [buddy.auth :as auth]
+  (:require [buddy.auth :as auth]
+            [buddy.auth.backends.token :as token-backend]
             [buddy.auth.protocols :as proto]
             [buddy.sign.jwt :as jwt]
-            [buddy.auth.backends :as backends]
-            [buddy.auth.protocols :as proto]))
+            [funcade.jwks :as jk])
+  (:import (clojure.lang ExceptionInfo)))
 
 (defn validate-scope [handler request required-scopes]
-  (let [decoded-token (request :identity)]
-    (let [scopes (->> (decoded-token :scope)
-                      (map #(keyword %)))
-          allowed-scopes (if (coll? required-scopes)
-                           (set required-scopes)
-                           #{required-scopes})]
-      (if (some allowed-scopes scopes)
-        (handler request)
-        {:status 401
-         :body   {:message  "missing required scope"
-                  :required required-scopes
-                  :scopes   scopes}}))))
+  (let [decoded-token  (request :identity)
+        scopes         (->> (decoded-token :scope)
+                            (map #(keyword %)))
+        allowed-scopes (if (coll? required-scopes)
+                         (set required-scopes)
+                         #{required-scopes})]
+    (if (some allowed-scopes scopes)
+      (handler request)
+      {:status 401
+       :body   {:message  "missing required scope"
+                :required required-scopes
+                :scopes   scopes}})))
 
 (defn authenticate [handler scope]
   (fn [request]
@@ -35,17 +35,16 @@
   (reify
     proto/IAuthentication
     (-parse [_ request]
-      (#'buddy.auth.backends.token/parse-header request token-name))
+      (#'token-backend/parse-header request token-name))
 
     (-authenticate [_ request data]
       (try
         (let [tkey (jk/find-token-key keyset data)]
           (authfn (jwt/unsign data tkey options)))
-        (catch clojure.lang.ExceptionInfo e
-          (let [data (ex-data e)]
-            (when (fn? on-error)
-              (on-error request e))
-            nil))))
+        (catch ExceptionInfo e
+          (when (fn? on-error)
+            (on-error request e))
+          nil)))
 
     proto/IAuthorization
     (-handle-unauthorized [_ request metadata]

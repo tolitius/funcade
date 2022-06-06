@@ -3,13 +3,14 @@
             [buddy.auth.middleware :as bm]))
 
 
-(defn wrap-jwt-authentication [{:keys [jwk]}]
+(defn wrap-jwt-authentication
   "middleware for JWT oauth2 bearer token validation
 
    takes a {:jwk {:uri \"https://foo.com/bar/jwks\"}} map
    that \":uri\" returns a list of JWT keys (a.k.a. keyset)
 
    adds :identity to request map on successful token decoding"
+  [{:keys [jwk]}]
   {:name ::jwt-auth
    :wrap #(bm/wrap-authentication % (fmb/jwks-authenticator jwk))})
 
@@ -24,4 +25,4 @@
   | `:scope`     | `:edit` required scope as keyword, does not mount if not set"
   {:name    ::scope
    :compile (fn [{:keys [scope]} _]
-              (if scope #(fmb/authenticate % scope)))})
+              (when scope #(fmb/authenticate % scope)))})
