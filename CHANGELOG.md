@@ -1,8 +1,9 @@
 # changelog
 
-## 0.1.19
-###### Fri Jan 6 16:30:10 2023 -0500
+## 0.1.20
+###### Fri Jan 6 16:36:37 2023 -0500
 
+* [dcec55e](/commit/dcec55e) add token name on acquire error
 * [abd670f](/commit/abd670f) deps.edn & params on can't acquire
 
 ## 0.1.18
