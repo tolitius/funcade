@@ -19,7 +19,7 @@
     (stop-token-channel! =stop=)))
 
 (defn- could-not-acquire [token-key params error]
-  (let [msg "could not aquire the JWT token"
+  (let [msg "could not acquire the JWT token"
         reason {:reason error
                 :params (-> params
                             tools/safe-params
