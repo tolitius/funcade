@@ -1,5 +1,10 @@
 # changelog
 
+## 0.1.19
+###### Fri Jan 6 16:30:10 2023 -0500
+
+* [abd670f](/commit/abd670f) deps.edn & params on can't acquire
+
 ## 0.1.18
 ###### Fri May 20 14:00:11 2022 -0400
 
