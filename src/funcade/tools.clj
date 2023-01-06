@@ -59,6 +59,14 @@
         (assoc :issued-at issued-at)
         (assoc :expires-at expires-at))))
 
+(defn safe-params [config]
+  (select-keys config [:access-token-url
+                       :grant-type
+                       :scope
+                       :token-headers
+                       :refresh-percent
+                       :jwt?]))
+
 (defn fmv
   "apply f to each value v of map m"
   [m f]

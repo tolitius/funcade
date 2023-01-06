@@ -18,17 +18,23 @@
   (stop [_]
     (stop-token-channel! =stop=)))
 
-(defn- init-token-channel!
-  [token-key {:keys [jwt?]
-              :or {jwt? true}
-              :as params} token-store]
+(defn- could-not-acquire [params error]
+  (let [msg "could not aquire the JWT token"
+        reason {:reason error
+                :params (tools/safe-params params)}]
+    (log/error msg reason)
+    (throw (ex-info msg reason))))
+
+(defn- init-token-channel!  [token-key
+                             {:keys [jwt?]
+                              :or {jwt? true}
+                              :as params}
+                             token-store]
   (let [stop-chan (a/chan 10)
         [token err] (a/<!! (t/new-token! params))
         token (tools/timebox token)]
     (if err
-      (do
-        (log/error "can't acquire token!" err)
-        (throw (ex-info "could not aquire the JWT token" err)))
+      (could-not-acquire params err)
       (do
         (swap! token-store (fn [s] (assoc s token-key token)))
         (t/schedule-token-renewal
