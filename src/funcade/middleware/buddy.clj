@@ -3,8 +3,7 @@
             [buddy.auth :as auth]
             [buddy.auth.protocols :as proto]
             [buddy.sign.jwt :as jwt]
-            [buddy.auth.backends :as backends]
-            [buddy.auth.protocols :as proto]))
+            [buddy.auth.backends.token]))
 
 (defn validate-scope [handler request required-scopes]
   (let [decoded-token (request :identity)]
@@ -41,11 +40,14 @@
       (try
         (let [tkey (jk/find-token-key keyset data)]
           (authfn (jwt/unsign data tkey options)))
+        (catch java.lang.IllegalArgumentException e
+          (throw (ex-info "Missing data for jwks authentication"
+                          {:nil-data? (nil? data)
+                           :nil-tkey? (nil? (jk/find-token-key keyset data))
+                           :options   options})))
         (catch clojure.lang.ExceptionInfo e
-          (let [data (ex-data e)]
-            (when (fn? on-error)
-              (on-error request e))
-            nil))))
+          (when (fn? on-error)
+            (on-error request e)))))
 
     proto/IAuthorization
     (-handle-unauthorized [_ request metadata]
