@@ -2,17 +2,16 @@
   (:require [jsonista.core :as json]
             [buddy.core.keys :as bk]
             [org.httpkit.client :as http]
-            [jsonista.core :as j]
             [funcade.tools :as t]))
 
 (defn- group-by-kid [certs]
- (->> (for [{:keys [kid] :as cert} certs]
-        [kid (bk/jwk->public-key cert)])
-      (into {})))
+  (->> (for [{:keys [kid] :as cert} certs]
+         [kid (bk/jwk->public-key cert)])
+       (into {})))
 
 (defn- parse-jwk-response [{:keys [body] :as response}]
   (try
-    (-> (j/read-value body t/mapper)
+    (-> (json/read-value body t/mapper)
         :keys
         group-by-kid)
     (catch Exception ex
