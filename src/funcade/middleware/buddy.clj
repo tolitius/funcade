@@ -40,6 +40,9 @@
     (-authenticate [_ request data]
       (try
         (let [tkey (jk/find-token-key keyset data)]
+          (when-not tkey
+            (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
+                            {:type :validation :cause :incorrect-sign-key})))
           (authfn (jwt/unsign data tkey options)))
         (catch clojure.lang.ExceptionInfo e
           (let [data (ex-data e)]
