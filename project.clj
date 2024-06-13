@@ -14,6 +14,7 @@
                  [com.auth0/java-jwt "3.19.2"]
                  [org.clojure/tools.logging "1.2.4"]
                  [funcool/cuerdas "2021.05.29-0"]
+                 [tolitius/calip "0.1.13"]
                  [metosin/jsonista "0.3.5"]
                  [com.rpl/specter "1.1.4"]
                  [camel-snake-kebab "0.4.2"]])

@@ -3,7 +3,8 @@
             [buddy.auth :as auth]
             [buddy.auth.protocols :as proto]
             [buddy.sign.jwt :as jwt]
-            [buddy.auth.backends]))
+            [buddy.auth.backends]
+            [calip.core :as calip]))
 
 (defn validate-scope [handler request required-scopes]
   (let [decoded-token (request :identity)]
@@ -19,7 +20,24 @@
                   :required required-scopes
                   :scopes   scopes}}))))
 
-(defn authenticate [handler scope]
+(defn- -authenticate-request
+  "I authenticate the request"
+  [request token {:keys [keyset options authfn on-error]}]
+  (try
+    (let [tkey (jk/find-token-key keyset token)]
+      (when-not tkey
+        (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
+                        {:type :validation :cause :incorrect-sign-key})))
+      (authfn (jwt/unsign token tkey options)))
+    (catch clojure.lang.ExceptionInfo e
+      (let [data (ex-data e)]
+        (when (fn? on-error)
+          (on-error {:request         request
+                     :exception/data  data}
+                    e))
+        nil))))
+
+(defn authenticate-scope [handler scope]
   (fn [request]
     (if (auth/authenticated? request)
       (validate-scope handler request scope)
@@ -32,25 +50,18 @@
     :or   {authfn identity token-name "Bearer" options {:alg :rs256}
            on-error #(println "[funcade] error: " %&)}}]
   {:pre [(ifn? authfn)]}
+  (calip/measure #{#'funcade.middleware.buddy/-authenticate-request}
+                 {:on-error? true})
   (reify
     proto/IAuthentication
     (-parse [_ request]
       (#'buddy.auth.backends.token/parse-header request token-name))
 
     (-authenticate [_ request data]
-      (try
-        (let [tkey (jk/find-token-key keyset data)]
-          (when-not tkey
-            (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
-                            {:type :validation :cause :incorrect-sign-key})))
-          (authfn (jwt/unsign data tkey options)))
-        (catch clojure.lang.ExceptionInfo e
-          (let [data (ex-data e)]
-            (when (fn? on-error)
-              (on-error {:request         request
-                         :exception/data  data}
-                        e))
-            nil))))
+      (-authenticate-request request data {:keyset    keyset
+                                           :options   options
+                                           :on-error  on-error
+                                           :authfn    authfn}))
 
     proto/IAuthorization
     (-handle-unauthorized [_ request metadata]
