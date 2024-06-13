@@ -2,7 +2,8 @@
   (:require [clojure.core.async :as a]
             [clojure.tools.logging :as log]
             [funcade.tools :as tools]
-            [funcade.tokens :as t]))
+            [funcade.tokens :as t]
+            [funcade.jwks]))
 
 (defn- stop-token-channel! [stop-chan]
   (a/put! stop-chan ::stop))
@@ -70,3 +71,10 @@
   (into {}
         (for [[source config] configs]
           [source (wake-token-master source config)])))
+
+
+(defn get-valid-kids
+  "I return the valid kid stored from the keyset provided by
+  Authentication provider"
+  []
+  (keys @#'funcade.jwks/keyset))

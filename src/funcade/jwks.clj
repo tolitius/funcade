@@ -5,10 +5,14 @@
             [jsonista.core :as j]
             [funcade.tools :as t]))
 
+(defonce ^:private
+  keyset (atom {}))
+
 (defn- group-by-kid [certs]
  (->> (for [{:keys [kid] :as cert} certs]
         [kid (bk/jwk->public-key cert)])
-      (into {})))
+      (into {})
+      (reset! keyset)))
 
 (defn- parse-jwk-response [{:keys [body] :as response}]
   (try

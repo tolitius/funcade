@@ -3,8 +3,7 @@
             [buddy.auth :as auth]
             [buddy.auth.protocols :as proto]
             [buddy.sign.jwt :as jwt]
-            [buddy.auth.backends :as backends]
-            [buddy.auth.protocols :as proto]))
+            [buddy.auth.backends]))
 
 (defn validate-scope [handler request required-scopes]
   (let [decoded-token (request :identity)]
@@ -30,7 +29,8 @@
 
 (defn jwks-backend
   [{:keys [keyset authfn unauthorized-handler options token-name on-error]
-    :or   {authfn identity token-name "Bearer" options {:alg :rs256}}}]
+    :or   {authfn identity token-name "Bearer" options {:alg :rs256}
+           on-error #(println "[funcade] error: " %&)}}]
   {:pre [(ifn? authfn)]}
   (reify
     proto/IAuthentication
@@ -47,7 +47,9 @@
         (catch clojure.lang.ExceptionInfo e
           (let [data (ex-data e)]
             (when (fn? on-error)
-              (on-error request e))
+              (on-error {:request         request
+                         :exception/data  data}
+                        e))
             nil))))
 
     proto/IAuthorization
