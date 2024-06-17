@@ -24,4 +24,4 @@
   | `:scope`     | `:edit` required scope as keyword, does not mount if not set"
   {:name    ::scope
    :compile (fn [{:keys [scope]} _]
-              (if scope #(fmb/authenticate-scope % scope)))})
+              (if scope #(fmb/authenticate % scope)))})

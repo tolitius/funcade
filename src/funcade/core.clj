@@ -73,7 +73,7 @@
           [source (wake-token-master source config)])))
 
 
-(defn find-current-kids
+(defn get-valid-kids
   "I return the valid kid stored from the keyset provided by
   Authentication provider"
   []
