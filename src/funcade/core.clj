@@ -73,8 +73,8 @@
           [source (wake-token-master source config)])))
 
 
-(defn get-valid-kids
-  "I return the valid kid stored from the keyset provided by
+(defn find-current-kids
+  "I return the current kids stored from the keyset provided by
   Authentication provider"
   []
   (keys @#'funcade.jwks/keyset))
