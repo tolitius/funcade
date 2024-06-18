@@ -1,4 +1,4 @@
-(defproject tolitius/funcade "0.1.18-SNAPSHOT"
+(defproject tolitius/funcade "0.1.24-SNAPSHOT"
   :description "creates, manages and refreshes oauth 2.0 jwt tokens"
   :url "https://github.com/tolitius/funcade"
   :license {:name "Eclipse Public License"
