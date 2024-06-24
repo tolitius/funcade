@@ -1,5 +1,5 @@
 (ns funcade.middleware.buddy
-  (:require [funcade.jwks :as jk]
+  (:require [funcade.jwks :as jwks]
             [buddy.auth :as auth]
             [buddy.auth.protocols :as proto]
             [buddy.sign.jwt :as jwt]
@@ -28,7 +28,7 @@
                 :message (str "access to " (request :uri) " is not authorized")}})))
 
 (defn jwks-backend
-  [{:keys [keyset authfn unauthorized-handler options token-name on-error]
+  [{:keys [keyset authfn unauthorized-handler options token-name on-error keyset-fn]
     :or   {authfn identity token-name "Bearer" options {:alg :rs256}
            on-error #(println "[funcade] error: " %&)}}]
   {:pre [(ifn? authfn)]}
@@ -39,7 +39,10 @@
 
     (-authenticate [_ request data]
       (try
-        (let [tkey (jk/find-token-key keyset data)]
+        (let [tkey (if (and (some? keyset-fn)
+                            (fn? keyset-fn))
+                     (keyset-fn (jwks/find-kid data))
+                     (jwks/find-token-key keyset data))]
           (when-not tkey
             (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
                             {:type :validation :cause :incorrect-sign-key})))
@@ -61,5 +64,7 @@
 (defn jwks-authenticator
   "JSON Web Key Set specific:
    i.e. needs a 'https://foo.com/bar/jwks' URI that returns unsign keys"
-  [{:keys [uri] :as options}]
-  (jwks-backend (assoc options :keyset (jk/jwks->keys uri))))
+  [{:keys [uri refresh-keyset?] :as options}]
+  (jwks-backend (cond-> options
+                       (not refresh-keyset?)  (assoc :keyset (jwks/jwks->keys uri))
+                       refresh-keyset?        (assoc :keyset-fn (jwks/jwks->keys-fn uri)))))
