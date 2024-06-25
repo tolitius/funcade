@@ -2,8 +2,26 @@
   (:require [jsonista.core :as json]
             [buddy.core.keys :as bk]
             [org.httpkit.client :as http]
-            [jsonista.core :as j]
             [funcade.tools :as t]))
+
+(defonce ^:private
+  keyset (atom nil))
+
+(defonce ^:private
+  uri (atom nil))
+
+(defn- find-key-by-kid
+  "Given the token's kid find the key from keyset"
+  [& kids]
+  (when (and (some? @keyset)
+           (seq kids))
+    (get-in @keyset kids)))
+
+(defn find-current-kids
+  "Find all current kids"
+  []
+  (when-let [keyset-value @keyset]
+    (keys keyset-value)))
 
 (defn- group-by-kid [certs]
  (->> (for [{:keys [kid] :as cert} certs]
@@ -12,9 +30,10 @@
 
 (defn- parse-jwk-response [{:keys [body] :as response}]
   (try
-    (-> (j/read-value body t/mapper)
-        :keys
-        group-by-kid)
+    (->> (json/read-value body t/mapper)
+         :keys
+         group-by-kid
+         (reset! keyset))
     (catch Exception ex
       (-> "unable to retrieve key from jwk response"
           (ex-info {:response response} ex)
@@ -28,35 +47,23 @@
           (ex-info response)
           throw))))
 
-(declare refresh-kids
-         find-keyset
-         current-kids)
+(defn refresh-kids
+  "Refresh new set of jwks-keyset from auth-provider"
+  []
+  (if (some? @uri)
+    (let [refreshed-keyset (jwks->keys @uri)]
+      (prn "[funcade]: refreshed keyset")
+      (keys refreshed-keyset))
+    (-> "[funcade] : error auth-uri not found"
+        (ex-info {:uri @uri})
+        throw)))
 
 (defn jwks->keys-fn
   "Generate the keyset and return getter-fn"
   [url]
-  (let [keyset    (jwks->keys url)]
-    (alter-var-root (var refresh-kids) (fn [existing-mapping]
-                                         (with-meta
-                                           ;; make sure don't alter the root more than once if already
-                                           ;; set
-                                           (if (-> existing-mapping meta :plugged? true?)
-                                             existing-mapping
-                                             (fn []
-                                               (jwks->keys-fn url)
-                                               (prn "[funcade]: done refreshing keyset")))
-                                           {:plugged? true})))
-    (alter-var-root (var current-kids) (fn [_]
-                                         (with-meta
-                                           (some-> keyset keys)
-                                           (meta (var current-kids)))))
-    (alter-var-root (var find-keyset) (fn [_]
-                                        (with-meta
-                                          (fn [& kids]
-                                            (when (seq kids)
-                                              (get-in keyset kids))) 
-                                          (meta (var find-keyset)))))
-    find-keyset))
+  (let [_ (->> (reset! uri url)
+               jwks->keys)]
+    find-key-by-kid))
 
 (defn find-kid [token]
   (some-> token
