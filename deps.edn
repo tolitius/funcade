@@ -1,15 +1,16 @@
 {:paths ["src" "classes"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        com.auth0/java-jwt {:mvn/version "4.4.0"}
-        org.clojure/tools.logging {:mvn/version "1.2.4"}
+ :deps {org.clojure/clojure                 {:mvn/version "1.11.1"}
+        com.auth0/java-jwt                  {:mvn/version "4.4.0"}
+        org.clojure/tools.logging           {:mvn/version "1.2.4"}
         camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.2"}
-        http-kit/http-kit {:mvn/version "2.6.0"}
-        funcool/cuerdas {:mvn/version "2021.05.29-0"}
-        buddy/buddy-auth {:mvn/version "3.0.323"}
-        com.rpl/specter {:mvn/version "1.1.4"}
-        buddy/buddy-sign {:mvn/version "3.5.351"}
-        metosin/jsonista {:mvn/version "0.3.8"}
-        org.clojure/core.async {:mvn/version "1.6.681"}}
+        http-kit/http-kit                   {:mvn/version "2.6.0"}
+        funcool/cuerdas                     {:mvn/version "2021.05.29-0"}
+        buddy/buddy-auth                    {:mvn/version "3.0.323"}
+        com.rpl/specter                     {:mvn/version "1.1.4"}
+        buddy/buddy-sign                    {:mvn/version "3.5.351"}
+        metosin/jsonista                    {:mvn/version "0.3.8"}
+        org.clojure/core.async              {:mvn/version "1.6.681"}
+        tolitius/yang                       {:mvn/version "0.1.41"}}
  :aliases {:dev {:extra-deps {}}
            :repl {;; :extra-paths ["test" "test/resources"]
                   :extra-deps {nrepl/nrepl {:mvn/version "0.7.0"}

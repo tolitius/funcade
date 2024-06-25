@@ -10,6 +10,7 @@ creates, manages and refreshes jwt tokens
   - [group many sources](#group-many-sources)
 - [use key sets (JWKS)](#use-key-sets-jwks)
 - [use in middleware](#using-middleware)
+  - [support JWKS keyset refresh](#support-keyset-refresh)
 - [Java API](#java-api)
 - [license](#license)
 
@@ -141,6 +142,71 @@ invalid scope:
 => (app {:request-method :get :uri "/ping" :headers {:authorization (str "Bearer " token)}})
 ;; {:status 401, :body {:message "missing required scope", :required :my-scope, :scopes (:not-my-scope)}}
 ```
+
+### Support middleware `keyset` refresh
+
+`funcade` as of version `0.1.25` supports `keyset-refresh` functionality, which refreshes the `keyset` used
+for `token-validation` given a specific `interval-ms` _iff provided_
+
+```clojure
+=> (require '[reitit.ring :as ring])
+=> (require '[funcade.middleware.reitit :as fun])
+
+=> (def config {:jwk {:uri "https://milky-way-galaxy/ext/jwtsigningcert/jwks"
+                      :refresh-interval-ms 1000 ;; enables refreshing `keyset` for every second
+                     })
+
+=> (def app
+      (ring/ring-handler
+        (ring/router
+          ["/ping" {:get {:scope :my-scope
+                          :handler (fn [_]
+                                     {:status 200
+                                      :body "success"})}}]
+          {:data {:middleware [(fun/wrap-jwt-authentication config})
+                               fun/scope-middleware]}})))
+
+;; after every second you see `print-messages`
+01-01-1999 00:00:00 [funcade]: refreshed keyset
+01-01-1999 00:00:01 [funcade]: refreshed keyset
+01-01-1999 00:00:02 [funcade]: refreshed keyset
+```
+
+Also support for `callback` is enabled for every `refresh` triggered
+
+```clojure
+=> (require '[reitit.ring :as ring])
+=> (require '[funcade.middleware.reitit :as fun])
+=> (require '[clojure.tools.logging :as log])
+
+=> (defn log-token-refresh
+     [refreshed-kids]
+     (log/info "Wooohoooooo refreshed keyset newset of kids are: " refreshed-kids))
+
+=> (def config {:jwk {:uri "https://milky-way-galaxy/ext/jwtsigningcert/jwks"
+                      :refresh-interval-ms 1000 ;; enables refreshing `keyset` for every second
+                      :refresh-callback log-token-refresh})
+
+=> (def app
+      (ring/ring-handler
+        (ring/router
+          ["/ping" {:get {:scope :my-scope
+                          :handler (fn [_]
+                                     {:status 200
+                                      :body "success"})}}]
+          {:data {:middleware [(fun/wrap-jwt-authentication config})
+                               fun/scope-middleware]}})))
+
+;; after every second you see `print-messages`
+01-01-1999 00:00:00 [funcade]: refreshed keyset
+01-01-1999 00:00:00 user [INFO] Wooohoooooo refreshed keyset newset of kids are: (kid-1 kid-2)
+01-01-1999 00:00:01 [funcade]: refreshed keyset
+01-01-1999 00:00:01  user [INFO] Wooohoooooo refreshed keyset newset of kids are: (kid-3 kid-4)
+01-01-1999 00:00:02 [funcade]: refreshed keyset
+01-01-1999 00:00:02  user [INFO] Wooohoooooo refreshed keyset newset of kids are: (kid-42 kid-42')
+```
+
+
 
 ## Java API
 

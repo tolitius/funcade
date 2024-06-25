@@ -2,19 +2,17 @@
   (:require [jsonista.core :as json]
             [buddy.core.keys :as bk]
             [org.httpkit.client :as http]
-            [funcade.tools :as t]))
+            [funcade.tools :as t]
+            [yang.scheduler :as scheduler]))
 
 (defonce ^:private
   keyset (atom nil))
 
-(defonce ^:private
-  uri (atom nil))
-
-(defn- find-key-by-kid
+(defn- find-token-key-by-kid
   "Given the token's kid find the key from keyset"
   [& kids]
   (when (and (some? @keyset)
-           (seq kids))
+             (seq kids))
     (get-in @keyset kids)))
 
 (defn find-current-kids
@@ -39,7 +37,7 @@
           (ex-info {:response response} ex)
           throw))))
 
-(defn jwks->keys [url]
+(defn- jwks->keys [url]
   (let [response @(http/get url)]
     (if-not (response :error)
       (parse-jwk-response response)
@@ -49,21 +47,24 @@
 
 (defn refresh-kids
   "Refresh new set of jwks-keyset from auth-provider"
-  []
-  (if (some? @uri)
-    (let [refreshed-keyset (jwks->keys @uri)]
-      (prn "[funcade]: refreshed keyset")
-      (keys refreshed-keyset))
-    (-> "[funcade] : error auth-uri not found"
-        (ex-info {:uri @uri})
-        throw)))
+  [uri callback]
+  (let [refreshed-keyset (jwks->keys uri)]
+    (prn "[funcade]: refreshed keyset")
+    (callback (keys refreshed-keyset))
+    (keys refreshed-keyset)))
 
 (defn jwks->keys-fn
-  "Generate the keyset and return getter-fn"
-  [url]
-  (let [_ (->> (reset! uri url)
-               jwks->keys)]
-    find-key-by-kid))
+  "Generate the keyset and return getter-fn
+  also given the refresh interval will schedule a 
+  scheduler to refresh keyset for every interval"
+  [url {:keys [refresh-interval-ms
+               refresh-callback]
+        :or {refresh-callback identity}}]
+  (let [_ (jwks->keys url)]
+    (when (some? refresh-interval-ms)
+      (scheduler/every refresh-interval-ms
+                       (partial refresh-kids url refresh-callback)))
+    find-token-key-by-kid))
 
 (defn find-kid [token]
   (some-> token
@@ -71,7 +72,7 @@
           (json/read-value t/mapper)
           :kid))
 
-(defn find-token-key [jwks token]
+(defn ^{:deprecated "0.1.25"} find-token-key [jwks token]
   (some-> token
           find-kid  
           jwks))
