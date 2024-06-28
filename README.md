@@ -10,7 +10,7 @@ creates, manages and refreshes jwt tokens
   - [group many sources](#group-many-sources)
 - [use key sets (JWKS)](#use-key-sets-jwks)
 - [use in middleware](#using-middleware)
-  - [support JWKS keyset refresh](#support-keyset-refresh)
+  - [support JWKS keyset refresh](#keyset-refresh)
 - [Java API](#java-api)
 - [license](#license)
 
