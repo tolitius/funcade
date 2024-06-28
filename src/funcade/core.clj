@@ -71,12 +71,3 @@
   (into {}
         (for [[source config] configs]
           [source (wake-token-master source config)])))
-
-(defn find-current-kids
-  "I return the current kids stored from the keyset provided by
-  Authentication provider"
-  []
-  (-> #'funcade.jwks/keyset
-      var-get
-      deref
-      keys))
