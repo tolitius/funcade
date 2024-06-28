@@ -143,7 +143,7 @@ invalid scope:
 ;; {:status 401, :body {:message "missing required scope", :required :my-scope, :scopes (:not-my-scope)}}
 ```
 
-### Support middleware `keyset` refresh
+### `keyset` refresh
 
 `funcade` as of version `0.1.25` supports `keyset-refresh` functionality, which refreshes the `keyset` used
 for `token-validation` given a specific `interval-ms` _iff provided_

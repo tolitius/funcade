@@ -8,18 +8,24 @@
 (defonce ^:private
   keyset (atom nil))
 
-(defn- find-token-key-by-kid
+(defonce ^:private
+  keyset-refresh-scheduler (atom nil))
+
+(defn stop-scheduled-refresh
+  "stop the scheduled refresh"
+  []
+  (some-> keyset-refresh-scheduler deref scheduler/stop))
+
+(defn find-token-key-by-kid
   "Given the token's kid find the key from keyset"
-  [& kids]
-  (when (and (some? @keyset)
-             (seq kids))
-    (get-in @keyset kids)))
+  [kid]
+  (some-> @keyset
+          (get kid)))
 
 (defn find-current-kids
   "Find all current kids"
   []
-  (when-let [keyset-value @keyset]
-    (keys keyset-value)))
+  (some-> @keyset keys))
 
 (defn- group-by-kid [certs]
  (->> (for [{:keys [kid] :as cert} certs]
@@ -46,25 +52,27 @@
           throw))))
 
 (defn refresh-kids
-  "Refresh new set of jwks-keyset from auth-provider"
+  "refresh jwks keyset from auth provider"
   [uri callback]
-  (let [refreshed-keyset (jwks->keys uri)]
-    (prn "[funcade]: refreshed keyset")
-    (callback (keys refreshed-keyset))
-    (keys refreshed-keyset)))
+  (let [current-kids      (-> uri jwks->keys keys) 
+        refresh-callback  (or callback
+                             (fn [_]
+                               (prn "[funcade]: refreshed keyset")))] 
+    (refresh-callback current-kids)
+    current-kids))
 
-(defn jwks->keys-fn
+(defn jwks->keyset
   "Generate the keyset and return getter-fn
   also given the refresh interval will schedule a 
   scheduler to refresh keyset for every interval"
   [url {:keys [refresh-interval-ms
-               refresh-callback]
-        :or {refresh-callback identity}}]
-  (let [_ (jwks->keys url)]
-    (when (some? refresh-interval-ms)
-      (scheduler/every refresh-interval-ms
-                       (partial refresh-kids url refresh-callback)))
-    find-token-key-by-kid))
+               refresh-callback]}]
+  (or (when (some? refresh-interval-ms)
+        (when (nil? @keyset-refresh-scheduler)
+          (->> (scheduler/every refresh-interval-ms
+                                (partial refresh-kids url refresh-callback))
+               (reset! keyset-refresh-scheduler))))
+      (jwks->keys url)))
 
 (defn find-kid [token]
   (some-> token

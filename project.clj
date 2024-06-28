@@ -1,4 +1,4 @@
-(defproject tolitius/funcade "0.1.25"
+(defproject tolitius/funcade "0.1.24-SNAPSHOT"
   :description "creates, manages and refreshes oauth 2.0 jwt tokens"
   :url "https://github.com/tolitius/funcade"
   :license {:name "Eclipse Public License"
@@ -16,4 +16,5 @@
                  [funcool/cuerdas "2021.05.29-0"]
                  [metosin/jsonista "0.3.5"]
                  [com.rpl/specter "1.1.4"]
-                 [camel-snake-kebab "0.4.2"]])
+                 [camel-snake-kebab "0.4.2"]
+                 [tolitius/yang "0.1.41"]])

@@ -28,7 +28,7 @@
                 :message (str "access to " (request :uri) " is not authorized")}})))
 
 (defn jwks-backend
-  [{:keys [_keyset authfn unauthorized-handler options token-name on-error keyset-fn]
+  [{:keys [authfn unauthorized-handler options token-name on-error]
     :or   {authfn identity token-name "Bearer" options {:alg :rs256}
            on-error #(println "[funcade] error: " %&)}}]
   {:pre [(ifn? authfn)]}
@@ -39,7 +39,9 @@
 
     (-authenticate [_ request data]
       (try
-        (let [tkey (keyset-fn (jwks/find-kid data))]
+        (let [tkey (-> data
+                       jwks/find-kid
+                       jwks/find-token-key-by-kid)]
           (when-not tkey
             (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
                             {:type :validation :cause :incorrect-sign-key})))
@@ -63,5 +65,5 @@
    i.e. needs a 'https://foo.com/bar/jwks' URI that returns unsign keys"
   [{:keys [uri]
     :as options}]
-  (jwks-backend (assoc options
-                       :keyset-fn (jwks/jwks->keys-fn uri options))))
+  (jwks/jwks->keyset uri options)
+  (jwks-backend options))
