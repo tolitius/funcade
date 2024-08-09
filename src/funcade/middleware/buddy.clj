@@ -28,9 +28,10 @@
                 :message (str "access to " (request :uri) " is not authorized")}})))
 
 (defn jwks-backend
-  [{:keys [authfn unauthorized-handler options token-name on-error]
+  [{:keys [authfn unauthorized-handler options token-name on-error retry-keyset-refresh? uri]
     :or   {authfn identity token-name "Bearer" options {:alg :rs256}
-           on-error #(println "[funcade] error: " %&)}}]
+           on-error #(println "[funcade] error: " %&)
+           retry-keyset-refresh? true}}]
   {:pre [(ifn? authfn)]}
   (reify
     proto/IAuthentication
@@ -39,13 +40,22 @@
 
     (-authenticate [_ request data]
       (try
-        (let [tkey (-> data
-                       jwks/find-kid
-                       jwks/find-token-key-by-kid)]
-          (when-not tkey
-            (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
-                            {:type :validation :cause :incorrect-sign-key})))
-          (authfn (jwt/unsign data tkey options)))
+        (letfn [(validate-token ([token-data]
+                                 (-> token-data
+                                     jwks/find-kid
+                                     jwks/find-token-key-by-kid)))
+                (authenticate-request ([token-key retry?]
+                                       (if token-key
+                                         (authfn (jwt/unsign data token-key options))
+                                         (let [unauthorized-error (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
+                                                                           {:type :validation :cause :incorrect-sign-key})]
+                                           (if retry? 
+                                             (do (jwks/refresh-kids uri nil) ;; nil is to avoid refresh scheduler
+                                                 (-> (validate-token data)
+                                                     (authenticate-request false))) 
+                                             (throw unauthorized-error))))))]
+          (-> (validate-token data)
+              (authenticate-request retry-keyset-refresh?)))
         (catch clojure.lang.ExceptionInfo e
           (let [data (ex-data e)]
             (when (fn? on-error)
