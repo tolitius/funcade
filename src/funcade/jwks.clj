@@ -53,13 +53,15 @@
 
 (defn refresh-kids
   "refresh jwks keyset from auth provider"
-  [uri callback]
-  (let [current-kids      (-> uri jwks->keys keys) 
-        refresh-callback  (or callback
-                             (fn [_]
-                               (prn "[funcade]: refreshed keyset")))] 
-    (refresh-callback current-kids)
-    current-kids))
+  ([uri]
+   (refresh-kids uri nil))
+  ([uri callback]
+   (let [current-kids      (-> uri jwks->keys keys) 
+         refresh-callback  (or callback
+                               (fn [_]
+                                 (prn "[funcade]: refreshed keyset")))] 
+     (refresh-callback current-kids)
+     current-kids)))
 
 (defn jwks->keyset
   "Generate the keyset and return getter-fn
