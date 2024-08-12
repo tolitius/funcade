@@ -27,11 +27,36 @@
        :body   {:error   "invalid authorization header"
                 :message (str "access to " (request :uri) " is not authorized")}})))
 
+(defn- authenticate-request
+  [token-data
+   {:keys [refresh-keyset?
+           options
+           uri]
+    :as auth-opts}]
+  (if-let [request-token-kid (-> token-data
+                                 jwks/find-kid
+                                 jwks/find-token-key-by-kid)]
+    (jwt/unsign token-data request-token-kid (or options
+                                                 {:alg :rs256})) 
+    (if refresh-keyset?
+      (do (jwks/refresh-kids uri)
+          (->> (assoc auth-opts :refresh-keyset? false)
+               (authenticate-request token-data))) 
+      (throw (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
+                      {:type :validation :cause :incorrect-sign-key})))))
+
 (defn jwks-backend
-  [{:keys [authfn unauthorized-handler options token-name on-error retry-keyset-refresh? uri]
-    :or   {authfn identity token-name "Bearer" options {:alg :rs256}
-           on-error #(println "[funcade] error: " %&)
-           retry-keyset-refresh? true}}]
+  [{jwt-header-options :options
+    jwt-keyset-uri     :uri
+    :keys [authfn
+           unauthorized-handler
+           token-name
+           on-error
+           refresh-keyset-on-error?]
+    :or   {authfn                   identity
+           token-name               "Bearer" 
+           on-error                 #(println "[funcade] error: " %&)
+           refresh-keyset-on-error? true}}]
   {:pre [(ifn? authfn)]}
   (reify
     proto/IAuthentication
@@ -40,22 +65,11 @@
 
     (-authenticate [_ request data]
       (try
-        (letfn [(validate-token ([token-data]
-                                 (-> token-data
-                                     jwks/find-kid
-                                     jwks/find-token-key-by-kid)))
-                (authenticate-request ([token-key retry?]
-                                       (if token-key
-                                         (authfn (jwt/unsign data token-key options))
-                                         (let [unauthorized-error (ex-info "jwt token is signed by unknown key (i.e. no public key in JSON Web Key Sets to verify the signature)"
-                                                                           {:type :validation :cause :incorrect-sign-key})]
-                                           (if retry? 
-                                             (do (jwks/refresh-kids uri nil) ;; nil is to avoid refresh scheduler
-                                                 (-> (validate-token data)
-                                                     (authenticate-request false))) 
-                                             (throw unauthorized-error))))))]
-          (-> (validate-token data)
-              (authenticate-request retry-keyset-refresh?)))
+        (-> (authenticate-request data
+                                  {:refresh-keyset? refresh-keyset-on-error?
+                                   :options         jwt-header-options
+                                   :uri             jwt-keyset-uri})
+            authfn) 
         (catch clojure.lang.ExceptionInfo e
           (let [data (ex-data e)]
             (when (fn? on-error)
