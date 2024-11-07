@@ -37,10 +37,10 @@
         {:funcade/error ex}))))
 
 (defn decode64 [^String s]
-  (.decode (Base64/getDecoder) s))
+  (.decode (Base64/getUrlDecoder) s))
 
 (defn encode64 [^bytes bs]
-  (.encodeToString (Base64/getEncoder) bs))
+  (.encodeToString (Base64/getUrlEncoder) bs))
 
 (def mapper (json/object-mapper {:decode-key-fn keyword}))
 
