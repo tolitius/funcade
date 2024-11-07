@@ -1,5 +1,12 @@
 # changelog
 
+## 0.1.26
+###### Thu Nov 7 14:36:09 2024 -0500
+
+* [71ffc14](../../commit/71ffc14) switch base64 decoding from string to url
+* [45096d7](../../commit/45096d7) supporting jwks keyset `refresh` functionality within `funcade`
+* [383286e](../../commit/383286e) throw when key is not found in jwks
+
 ## 0.1.20
 ###### Fri Jan 6 16:36:37 2023 -0500
 
