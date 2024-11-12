@@ -1,4 +1,4 @@
-.PHONY: clean aot jar tag outdated install deploy tree repl
+.PHONY: clean aot jar tag outdated install deploy tree repl test
 
 clean:
 	rm -rf target
@@ -28,3 +28,6 @@ tree:
 
 repl:
 	clojure -A:dev -A:repl
+
+test:
+	clojure -M:test

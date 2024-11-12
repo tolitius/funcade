@@ -14,7 +14,8 @@
 (defn stop-scheduled-refresh
   "stop the scheduled refresh"
   []
-  (some-> keyset-refresh-scheduler deref scheduler/stop))
+  (some-> keyset-refresh-scheduler deref scheduler/stop)
+  (reset! keyset-refresh-scheduler nil))
 
 (defn find-token-key-by-kid
   "Given the token's kid find the key from keyset"
@@ -73,7 +74,9 @@
         (when (nil? @keyset-refresh-scheduler)
           (->> (scheduler/every refresh-interval-ms
                                 (partial refresh-kids url refresh-callback))
-               (reset! keyset-refresh-scheduler))))
+               (reset! keyset-refresh-scheduler))
+          @keyset))
+      @keyset
       (jwks->keys url)))
 
 (defn find-kid [token]
